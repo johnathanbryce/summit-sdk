@@ -1,0 +1,13 @@
+{
+  "name": "@summit/types",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./dist/index.d.ts",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

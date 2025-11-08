@@ -1,0 +1,22 @@
+{
+  "name": "summit-sdk-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Summit SDK - AI-powered content querying service",
+  "scripts": {
+    "build": "pnpm --filter '@summit/*' build",
+    "build:demo": "pnpm --filter '@summit/demo' build",
+    "build:marketing": "pnpm --filter '@summit/marketing' build",
+    "build:all": "pnpm build && pnpm build:demo && pnpm build:marketing",
+    "dev": "pnpm --filter '@summit/demo' dev",
+    "dev:marketing": "pnpm --filter '@summit/marketing' dev",
+    "clean": "pnpm --filter '@summit/*' exec rm -rf dist node_modules"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}
