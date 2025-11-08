@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+.venv/
+venv/
+ENV/
+env/
+
+# Build outputs
+dist/
+build/
+*.egg-info/
+.next/
+out/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+.coverage
+*.cover
+.pytest_cache/
+.vitest/
+
+# Logs
+*.log
+logs/
+
+# Docker
+*.pid
+*.seed
+*.pid.lock
+
+# Misc
+.turbo/
+.cache/
