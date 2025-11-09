@@ -10,6 +10,7 @@
 Summit SDK provides developers with a powerful, type-safe interface to transform web content and text into AI-queryable assets. Built with TypeScript and powered by Anthropic Claude, it offers both a framework-agnostic core SDK and optional UI components for rapid integration.
 
 **Key Features:**
+
 - 🤖 AI-powered content querying
 - 📦 Framework-agnostic core SDK
 - ⚛️ Optional headless React components
@@ -36,10 +37,7 @@ import { SummitSDK } from '@summit/core'
 
 const sdk = new SummitSDK({ apiKey: 'your-api-key' })
 
-const result = await sdk.query(
-  'https://example.com',
-  'What is this page about?'
-)
+const result = await sdk.query('https://example.com', 'What is this page about?')
 
 console.log(result.answer)
 ```
@@ -94,32 +92,36 @@ summit-sdk/
 
 ## Packages
 
-| Package | Version | Description |
-|---------|---------|-------------|
-| [@summit/core](packages/core) | Coming soon | Core SDK functionality |
-| [@summit/ui](packages/ui) | Coming soon | Optional React components |
+| Package                         | Version     | Description                 |
+| ------------------------------- | ----------- | --------------------------- |
+| [@summit/core](packages/core)   | Coming soon | Core SDK functionality      |
+| [@summit/ui](packages/ui)       | Coming soon | Optional React components   |
 | [@summit/types](packages/types) | Coming soon | TypeScript type definitions |
 
 ## Tech Stack
 
 **SDK & Frontend:**
+
 - TypeScript
 - React 19
 - Vite (bundler)
 - Mantine (UI components)
 
 **Backend:**
+
 - Python
 - FastAPI (API gateway)
 - Background workers
 
 **AI & Data:**
+
 - Anthropic Claude (LLM)
 - Pinecone (vector database)
 - Redis (caching)
 - PostgreSQL (metadata)
 
 **Infrastructure:**
+
 - AWS App Runner
 - RDS PostgreSQL
 - ElastiCache Redis
