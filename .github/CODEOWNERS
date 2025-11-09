@@ -1,0 +1,28 @@
+# Code Owners for Summit SDK
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Global owner - default for all files
+* @johnathanbryce
+
+# Documentation
+/docs/ @johnathanbryce
+*.md @johnathanbryce
+
+# SDK Packages
+/packages/core/ @johnathanbryce
+/packages/ui/ @johnathanbryce
+/packages/types/ @johnathanbryce
+
+# Backend Services
+/services/ @johnathanbryce
+
+# Infrastructure
+/infrastructure/ @johnathanbryce
+
+# CI/CD
+/.github/ @johnathanbryce
+
+# Configuration files
+package.json @johnathanbryce
+tsconfig*.json @johnathanbryce
+pnpm-workspace.yml @johnathanbryce
