@@ -55,3 +55,6 @@ logs/
 # Misc
 .turbo/
 .cache/
+
+# Claude context (personal notes)
+.claude/
