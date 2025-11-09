@@ -2,6 +2,7 @@
   "name": "summit-sdk-monorepo",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "Summit SDK - AI-powered content querying service",
   "scripts": {
     "build": "pnpm --filter '@summit/*' build",
@@ -10,9 +11,18 @@
     "build:all": "pnpm build && pnpm build:demo && pnpm build:marketing",
     "dev": "pnpm --filter '@summit/demo' dev",
     "dev:marketing": "pnpm --filter '@summit/marketing' dev",
-    "clean": "pnpm --filter '@summit/*' exec rm -rf dist node_modules"
+    "clean": "pnpm --filter '@summit/*' exec rm -rf dist node_modules",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md}\""
   },
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.46.3",
+    "@typescript-eslint/parser": "^8.46.3",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.6.2",
     "typescript": "^5.9.3"
   },
   "engines": {

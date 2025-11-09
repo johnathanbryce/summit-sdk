@@ -7,6 +7,7 @@ Thank you for your interest in contributing to Summit SDK!
 See our [Development Guide](docs/contributing/development.md) for detailed setup instructions.
 
 Quick start:
+
 ```bash
 # Prerequisites: Node.js >= 18, pnpm >= 8
 
@@ -19,6 +20,7 @@ pnpm install
 ## Development Workflow
 
 1. **Create a feature branch**
+
    ```bash
    git checkout -b feat/your-feature-name
    ```
@@ -29,6 +31,7 @@ pnpm install
    - Update documentation
 
 3. **Test your changes**
+
    ```bash
    pnpm build        # Build packages
    pnpm lint         # Lint code (when available)
@@ -36,6 +39,7 @@ pnpm install
    ```
 
 4. **Commit and push**
+
    ```bash
    git add .
    git commit -m "feat: add your feature"
@@ -67,6 +71,7 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 - `chore:` - Maintenance tasks
 
 Examples:
+
 ```
 feat: add query caching to SDK
 fix: resolve memory leak in worker service
