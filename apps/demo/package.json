@@ -8,17 +8,19 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
+    "@mantine/core": "^8.3.6",
+    "@mantine/hooks": "^8.3.6",
     "@summit/core": "workspace:*",
+    "@summit/types": "workspace:*",
     "@summit/ui": "workspace:*",
-    "@summit/types": "workspace:*"
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
   },
   "devDependencies": {
-    "typescript": "^5.9.3",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.0",
+    "typescript": "^5.9.3",
     "vite": "^5.4.0"
   }
 }
