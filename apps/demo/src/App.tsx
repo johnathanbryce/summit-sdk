@@ -1,11 +1,10 @@
-import React from 'react'
 import { useState } from 'react'
 import { Container, Title, Text, Paper, Stack, Group, TextInput, Button, Box } from '@mantine/core'
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 interface Message {
   role: 'user' | 'assistant'
-  content: string
-  timestamp: Date
+  response: string
 }
 
 const App = () => {
@@ -19,27 +18,28 @@ const App = () => {
 
     const userMessage: Message = {
       role: 'user',
-      content: input.trim(),
-      timestamp: new Date(),
+      response: input.trim(),
     }
     setMessages((prev) => [...prev, userMessage])
-    setInput('')
-    setIsLoading(true)
 
     try {
-      // TODO: Replace with actual SDK call
-      // const response = await summit.query(input)
+      setIsLoading(true)
+      const response = await fetch(`${API_BASE_URL}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: [{ role: 'user', content: input }],
+          respondInLanguage: null,
+        }),
+      })
 
-      // Mock response for now
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      const assistantMessage: Message = {
-        role: 'assistant',
-        content: `Mock response to: "${userMessage.content}"`,
-        timestamp: new Date(),
+      const data = await response.json()
+      if (data.response) {
+        setMessages((prevMessages) => [...prevMessages, data])
+        setInput('')
       }
-      setMessages((prev) => [...prev, assistantMessage])
     } catch (error) {
-      console.error('Error:', error)
+      console.log(error)
     } finally {
       setIsLoading(false)
     }
@@ -88,11 +88,8 @@ const App = () => {
                     <Text size="xs" fw={600} opacity={0.8}>
                       {message.role === 'user' ? 'You' : 'Assistant'}
                     </Text>
-                    <Text size="xs" opacity={0.6}>
-                      {message.timestamp.toLocaleTimeString()}
-                    </Text>
                   </Group>
-                  <Text size="sm">{message.content}</Text>
+                  <Text size="sm">{message.response}</Text>
                 </Box>
               ))}
               {isLoading && (
