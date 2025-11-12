@@ -59,3 +59,9 @@ logs/
 # Claude context (personal notes)
 .claude/
 
+# Personal developer notes
+NOTES.md
+TODO.md
+notes.md
+todo.md
+
