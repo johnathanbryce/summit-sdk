@@ -44,6 +44,12 @@ async def chat(request: ChatRequest):
 
     system_prompt = build_system_prompt(language_instruction)
 
+    # TODO: REDIS CHECK: Look for cached summary first
+    #     cache_key = f"summary:{hash(request.content)}"
+    #     cached = await cache.get(cache_key)
+    #     if not cached:
+    #         return {"error": "Call /summarize first"}
+
     # convert pydantic models to dicts for anthropic
     messages = [msg.model_dump() for msg in request.content]
 
