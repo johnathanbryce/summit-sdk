@@ -28,8 +28,6 @@ cache_client = None  # No cache for now
 async def summarize(request):
     """
     Summarize content (URL or raw text).
-
-
     """
     service = SummarizeService(llm_model, cache_client)
     result = await service.process(request.content)

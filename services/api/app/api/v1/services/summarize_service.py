@@ -4,13 +4,17 @@ class SummarizeService:
         self.cache = cache_client
 
     async def process(self, content: str):
+        print("** _PROCESS CALLED ** ")
         content_type = self._detect_type(content)
 
     def _detect_type(self, content: str):
+        print("** _DETECT_TYPE CALLED ** ")
+        # TODO: determine whether content is url or text and call the appropriate function
         pass
 
     async def _handle_urls(self, url: str):
         """Handle URL summarization."""
+        print("** _HANDLE_URLS CALLED ** ")
 
         # TODO: REDIS - Check cache for existing summary first
         # cache_key = f"summary:{hash(url)}"
@@ -30,7 +34,7 @@ class SummarizeService:
         # Scrape website (no cache for now)
         scraped_text = "TODO: scrape logic here"
 
-        # Summarize with LLM
+        # Summarize with LLM if no cache result
         summary = "TODO: LLM call here"
 
         # TODO: REDIS - Cache the summary
@@ -41,14 +45,14 @@ class SummarizeService:
 
     async def _handle_text(self, text: str):
         """Handle raw text summarization."""
-
+        print("** _HANDLE_TEXT CALLED ** ")
         # TODO: REDIS - Check cache for existing summary first
         # cache_key = f"summary:{hash(text)}"
         # cached = await self.cache.get(cache_key)
         # if cached:
         #     return cached
 
-        # Summarize with LLM
+        # Summarize with LLM if no cache result
         summary = "TODO: LLM call here"
 
         # TODO: REDIS - Cache the summary

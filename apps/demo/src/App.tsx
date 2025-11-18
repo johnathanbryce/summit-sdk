@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Container, Title, Text, Paper, Stack, Group, TextInput, Button, Box } from '@mantine/core'
+import { Container, Title, Text, Paper, Stack, Group, TextInput, Button, Box, SegmentedControl } from '@mantine/core'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 interface Message {
@@ -7,10 +7,13 @@ interface Message {
   response: string
 }
 
+type InputType = 'summary' | 'chat'
+
 const App = () => {
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [inputType, setInputType] = useState<InputType>('summary')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -24,7 +27,8 @@ const App = () => {
 
     try {
       setIsLoading(true)
-      const response = await fetch(`${API_BASE_URL}/chat`, {
+      const endpoint = inputType === 'chat' ? '/chat' : '/summarize'
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -39,7 +43,7 @@ const App = () => {
         setInput('')
       }
     } catch (error) {
-      console.log(error)
+      console.error('Error:', error)
     } finally {
       setIsLoading(false)
     }
@@ -110,20 +114,37 @@ const App = () => {
         </Box>
 
         <Box p="md" style={{ borderTop: '1px solid var(--mantine-color-gray-3)' }}>
-          <form onSubmit={handleSubmit}>
-            <Group gap="xs">
-              <TextInput
-                flex={1}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask a question..."
-                disabled={isLoading}
+          <Stack gap="md">
+            <Group justify="center">
+              <SegmentedControl
+                value={inputType}
+                onChange={(value) => setInputType(value as InputType)}
+                data={[
+                  { label: 'Summarize', value: 'summary' },
+                  { label: 'Chat', value: 'chat' },
+                ]}
               />
-              <Button type="submit" disabled={isLoading || !input.trim()}>
-                {isLoading ? 'Sending...' : 'Send'}
-              </Button>
             </Group>
-          </form>
+
+            <form onSubmit={handleSubmit}>
+              <Group gap="xs">
+                <TextInput
+                  flex={1}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder={
+                    inputType === 'chat'
+                      ? 'Ask a question...'
+                      : 'Input text or a URL for a summary...'
+                  }
+                  disabled={isLoading}
+                />
+                <Button type="submit" disabled={isLoading || !input.trim()}>
+                  {isLoading ? 'Sending...' : 'Send'}
+                </Button>
+              </Group>
+            </form>
+          </Stack>
         </Box>
       </Paper>
     </Container>

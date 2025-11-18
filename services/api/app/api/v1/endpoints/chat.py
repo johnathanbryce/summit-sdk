@@ -36,7 +36,7 @@ async def chat(request: ChatRequest):
     Returns:
         ChatResponse with Claude's response, token usage, and metadata
     """
-
+    print("** /CHAT CALLED ** ")
     # optional language instruction
     language_instruction = None
     if request.respondInLanguage:
