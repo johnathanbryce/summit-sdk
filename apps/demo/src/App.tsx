@@ -29,7 +29,7 @@ const App = () => {
   const [summaryTokens, setSummaryTokens] = useState({ input: 0, output: 0, total: 0 })
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // Auto-scroll to bottom when messages change
+  // auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isLoading])
@@ -94,7 +94,6 @@ const App = () => {
         <Title order={1}>Summit SDK Demo</Title>
         <Text c="dimmed">AI-powered content querying</Text>
 
-        {/* Token Trackers */}
         <Group justify="center" gap="xl">
           <Box>
             <Text size="xs" c="dimmed" ta="center">
