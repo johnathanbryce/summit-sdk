@@ -9,19 +9,19 @@ class Message(BaseModel):
     role: str
 
 
-class ChatRequest(BaseModel):
-    """Request model for chat endpoint."""
-
-    content: List[Message]
-    respondInLanguage: Optional[str] = None
-
-
 class TokenUsage(BaseModel):
     """Token usage statistics for a chat completion."""
 
     input_tokens: int
     output_tokens: int
     total_tokens: int
+
+
+class ChatRequest(BaseModel):
+    """Request model for chat endpoint."""
+
+    content: List[Message]
+    respondInLanguage: Optional[str] = None
 
 
 class ChatResponse(BaseModel):
@@ -33,3 +33,12 @@ class ChatResponse(BaseModel):
     model: str
     stop_reason: Optional[str] = None
     message_id: Optional[str] = None
+
+
+# TODO: flesh these out when ready
+class SummarizeRequest(BaseModel):
+    """Request model for summarize endpoint."""
+
+
+class SummarizeResponse(BaseModel):
+    """Response model for summarize endpoint."""

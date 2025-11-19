@@ -1,10 +1,9 @@
 from fastapi import APIRouter
-from typing import Optional
 
 # internal
-from app.core.config import settings, anthropic_client
+from app.core.config import settings
 from app.models.chat_models import ChatRequest, ChatResponse
-from app.api.v1.services import SummarizeService
+from app.api.v1.services.summarize_service import SummarizeService
 
 router = APIRouter()
 
@@ -24,11 +23,12 @@ cache_client = None  # No cache for now
 # 2. llm summary result
 
 
-@router.post("/summarize")
-async def summarize(request):
+@router.post("/summarize", response_model=ChatResponse)
+async def summarize(request: ChatRequest):
     """
     Summarize content (URL or raw text).
     """
-    service = SummarizeService(llm_model, cache_client)
+    language_instruction = request.respondInLanguage
+    service = SummarizeService(llm_model, cache_client, language_instruction)
     result = await service.process(request.content)
     return result

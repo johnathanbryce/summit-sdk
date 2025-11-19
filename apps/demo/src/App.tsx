@@ -1,5 +1,16 @@
 import { useState } from 'react'
-import { Container, Title, Text, Paper, Stack, Group, TextInput, Button, Box, SegmentedControl } from '@mantine/core'
+import {
+  Container,
+  Title,
+  Text,
+  Paper,
+  Stack,
+  Group,
+  TextInput,
+  Button,
+  Box,
+  SegmentedControl,
+} from '@mantine/core'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 interface Message {
@@ -28,6 +39,7 @@ const App = () => {
     try {
       setIsLoading(true)
       const endpoint = inputType === 'chat' ? '/chat' : '/summarize'
+
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -38,6 +50,7 @@ const App = () => {
       })
 
       const data = await response.json()
+
       if (data.response) {
         setMessages((prevMessages) => [...prevMessages, data])
         setInput('')
