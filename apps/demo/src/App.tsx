@@ -16,6 +16,11 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000
 interface Message {
   role: 'user' | 'assistant'
   content: string
+  metadata?: {
+    source_type?: string
+    source?: string | null
+    model?: string
+  }
 }
 
 type InputType = 'summary' | 'chat'
@@ -33,6 +38,12 @@ const App = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isLoading])
+
+  // clear messages when switching between /chat and /summarize
+  const handleModeChange = (value: string) => {
+    setInputType(value as InputType)
+    setMessages([])
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -64,22 +75,49 @@ const App = () => {
 
       const data = await response.json()
 
-      if (data.response) {
+      // handle different response formats for /chat vs /summarize
+      if (inputType === 'chat' && data.response) {
         setMessages((prevMessages) => [
           ...prevMessages,
           { role: data.role, content: data.response },
         ])
         setInput('')
+      } else if (inputType === 'summary' && data.summary) {
+        // Summarize response - show full JSON structure
+        const formattedJson = JSON.stringify(
+          {
+            summary: data.summary,
+            source_type: data.source_type,
+            source: data.source,
+            model: data.model,
+            usage: data.usage,
+          },
+          null,
+          2
+        )
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          {
+            role: 'assistant',
+            content: formattedJson,
+            metadata: {
+              source_type: data.source_type,
+              source: data.source,
+              model: data.model,
+            },
+          },
+        ])
+        setInput('')
+      }
 
-        // update token tracking
-        if (data.usage) {
-          const updateFunc = inputType === 'chat' ? setChatTokens : setSummaryTokens
-          updateFunc((prev) => ({
-            input: prev.input + data.usage.input_tokens,
-            output: prev.output + data.usage.output_tokens,
-            total: prev.total + data.usage.total_tokens,
-          }))
-        }
+      // update token tracking
+      if (data.usage) {
+        const updateFunc = inputType === 'chat' ? setChatTokens : setSummaryTokens
+        updateFunc((prev) => ({
+          input: prev.input + data.usage.input_tokens,
+          output: prev.output + data.usage.output_tokens,
+          total: prev.total + data.usage.total_tokens,
+        }))
       }
     } catch (error) {
       console.error('Error:', error)
@@ -131,14 +169,16 @@ const App = () => {
                   key={index}
                   p="sm"
                   style={{
-                    maxWidth: '80%',
+                    maxWidth: message.metadata ? '95%' : '80%',
                     marginLeft: message.role === 'user' ? 'auto' : 0,
                     marginRight: message.role === 'user' ? 0 : 'auto',
                     backgroundColor:
                       message.role === 'user'
                         ? 'var(--mantine-color-blue-6)'
-                        : 'var(--mantine-color-white)',
-                    color: message.role === 'user' ? 'white' : 'inherit',
+                        : message.metadata
+                          ? 'var(--mantine-color-dark-9)'
+                          : 'var(--mantine-color-white)',
+                    color: message.role === 'user' || message.metadata ? 'white' : 'inherit',
                     borderRadius: 'var(--mantine-radius-md)',
                     border:
                       message.role === 'assistant'
@@ -148,10 +188,23 @@ const App = () => {
                 >
                   <Group justify="space-between" mb={4}>
                     <Text size="xs" fw={600} opacity={0.8}>
-                      {message.role === 'user' ? 'You' : 'Assistant'}
+                      {message.role === 'user'
+                        ? 'You'
+                        : message.metadata
+                          ? 'API Response'
+                          : 'Assistant'}
                     </Text>
                   </Group>
-                  <Text size="sm">{message.content}</Text>
+                  <Text
+                    size="sm"
+                    style={{
+                      fontFamily: message.metadata ? 'monospace' : 'inherit',
+                      whiteSpace: message.metadata ? 'pre-wrap' : 'normal',
+                      fontSize: message.metadata ? '0.75rem' : undefined,
+                    }}
+                  >
+                    {message.content}
+                  </Text>
                 </Box>
               ))}
               {isLoading && (
@@ -177,7 +230,7 @@ const App = () => {
             <Group justify="center">
               <SegmentedControl
                 value={inputType}
-                onChange={(value) => setInputType(value as InputType)}
+                onChange={handleModeChange}
                 data={[
                   { label: 'Summarize', value: 'summary' },
                   { label: 'Chat', value: 'chat' },

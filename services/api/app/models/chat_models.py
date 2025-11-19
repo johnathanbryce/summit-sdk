@@ -35,10 +35,11 @@ class ChatResponse(BaseModel):
     message_id: Optional[str] = None
 
 
-# TODO: flesh these out when ready
-class SummarizeRequest(BaseModel):
-    """Request model for summarize endpoint."""
-
-
 class SummarizeResponse(BaseModel):
     """Response model for summarize endpoint."""
+
+    summary: str
+    source_type: str  # "url" or "text"
+    source: Optional[str] = None  # URL if source_type is "url", otherwise None
+    usage: TokenUsage  # Reuse existing TokenUsage model
+    model: str

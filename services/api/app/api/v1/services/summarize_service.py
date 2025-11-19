@@ -1,8 +1,7 @@
-import re
 from typing import List, Optional
 
 # internal:
-from app.models.chat_models import ChatResponse, SummarizeResponse, Message
+from app.models.chat_models import SummarizeResponse, Message
 from app.core.config import anthropic_client, settings
 
 llm_model = settings.claude_model
@@ -47,13 +46,11 @@ class SummarizeService:
             print("ERROR IN PROCESS")
             # TODO: throw a proper error
 
-        return ChatResponse(
-            response=result.get("summary", ""),
-            role="assistant",
-            usage=result.get(
-                "usage",  # Fixed: changed from "total_tokens" to "usage"
-                {"input_tokens": 0, "output_tokens": 0, "total_tokens": 0},
-            ),
+        return SummarizeResponse(
+            summary=result.get("summary", ""),
+            source_type=content_type,
+            source=result.get("source"),  # URL or None
+            usage=result.get("usage", {"input_tokens": 0, "output_tokens": 0, "total_tokens": 0}),
             model=self.llm_model,
         )
 
@@ -96,7 +93,11 @@ class SummarizeService:
         # result = {"summary": summary, "source": url}
         # await self.cache.set(cache_key, result, ttl=604800)  # 7 days
 
-        return {"summary": summary, "source": url}
+        return {
+            "summary": summary,
+            "source": url,
+            "usage": {"input_tokens": 0, "output_tokens": 0, "total_tokens": 0},  # Dummy for now
+        }
 
     async def _handle_text(self, text: str):
         """Handle raw text summarization."""
@@ -136,6 +137,7 @@ class SummarizeService:
 
         return {
             "summary": summary_text,
+            "source": None,  # No source for text summaries
             "usage": {
                 "input_tokens": summary.usage.input_tokens,
                 "output_tokens": summary.usage.output_tokens,
