@@ -25,6 +25,8 @@ const App = () => {
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [inputType, setInputType] = useState<InputType>('summary')
+  const [chatTokens, setChatTokens] = useState({ input: 0, output: 0, total: 0 })
+  const [summaryTokens, setSummaryTokens] = useState({ input: 0, output: 0, total: 0 })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -54,6 +56,16 @@ const App = () => {
       if (data.response) {
         setMessages((prevMessages) => [...prevMessages, data])
         setInput('')
+
+        // update token tracking
+        if (data.usage) {
+          const updateFunc = inputType === 'chat' ? setChatTokens : setSummaryTokens
+          updateFunc((prev) => ({
+            input: prev.input + data.usage.input_tokens,
+            output: prev.output + data.usage.output_tokens,
+            total: prev.total + data.usage.total_tokens,
+          }))
+        }
       }
     } catch (error) {
       console.error('Error:', error)
@@ -67,6 +79,26 @@ const App = () => {
       <Stack gap="lg" mb="xl" ta="center">
         <Title order={1}>Summit SDK Demo</Title>
         <Text c="dimmed">AI-powered content querying</Text>
+
+        {/* Token Trackers */}
+        <Group justify="center" gap="xl">
+          <Box>
+            <Text size="xs" c="dimmed" ta="center">
+              Chat Tokens
+            </Text>
+            <Text size="sm" fw={500} ta="center">
+              {chatTokens.total.toLocaleString()}
+            </Text>
+          </Box>
+          <Box>
+            <Text size="xs" c="dimmed" ta="center">
+              Summary Tokens
+            </Text>
+            <Text size="sm" fw={500} ta="center">
+              {summaryTokens.total.toLocaleString()}
+            </Text>
+          </Box>
+        </Group>
       </Stack>
 
       <Paper shadow="sm" radius="md" withBorder>
