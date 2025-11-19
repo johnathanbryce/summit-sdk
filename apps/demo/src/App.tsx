@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   Container,
   Title,
@@ -15,7 +15,7 @@ import {
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 interface Message {
   role: 'user' | 'assistant'
-  response: string
+  content: string
 }
 
 type InputType = 'summary' | 'chat'
@@ -27,6 +27,12 @@ const App = () => {
   const [inputType, setInputType] = useState<InputType>('summary')
   const [chatTokens, setChatTokens] = useState({ input: 0, output: 0, total: 0 })
   const [summaryTokens, setSummaryTokens] = useState({ input: 0, output: 0, total: 0 })
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, isLoading])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,7 +40,7 @@ const App = () => {
 
     const userMessage: Message = {
       role: 'user',
-      response: input.trim(),
+      content: input.trim(),
     }
     setMessages((prev) => [...prev, userMessage])
 
@@ -42,11 +48,16 @@ const App = () => {
       setIsLoading(true)
       const endpoint = inputType === 'chat' ? '/chat' : '/summarize'
 
+      const conversationHistory = [...messages, userMessage].map((msg) => ({
+        role: msg.role,
+        content: msg.content,
+      }))
+
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          content: [{ role: 'user', content: input }],
+          content: conversationHistory,
           respondInLanguage: null,
         }),
       })
@@ -54,7 +65,10 @@ const App = () => {
       const data = await response.json()
 
       if (data.response) {
-        setMessages((prevMessages) => [...prevMessages, data])
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          { role: data.role, content: data.response },
+        ])
         setInput('')
 
         // update token tracking
@@ -75,7 +89,7 @@ const App = () => {
   }
 
   return (
-    <Container size="md" py="xl">
+    <Container size="lg" py="xl">
       <Stack gap="lg" mb="xl" ta="center">
         <Title order={1}>Summit SDK Demo</Title>
         <Text c="dimmed">AI-powered content querying</Text>
@@ -103,7 +117,7 @@ const App = () => {
 
       <Paper shadow="sm" radius="md" withBorder>
         <Box
-          h={500}
+          h={600}
           p="md"
           style={{ overflowY: 'auto', backgroundColor: 'var(--mantine-color-gray-0)' }}
         >
@@ -138,7 +152,7 @@ const App = () => {
                       {message.role === 'user' ? 'You' : 'Assistant'}
                     </Text>
                   </Group>
-                  <Text size="sm">{message.response}</Text>
+                  <Text size="sm">{message.content}</Text>
                 </Box>
               ))}
               {isLoading && (
@@ -154,6 +168,7 @@ const App = () => {
                   <Text size="sm">●●●</Text>
                 </Box>
               )}
+              <div ref={messagesEndRef} />
             </Stack>
           )}
         </Box>
