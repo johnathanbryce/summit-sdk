@@ -1,32 +1,16 @@
 from typing import List, Optional
+from fastapi import HTTPException
+import anthropic
+import time
 
 # internal:
 from app.models.chat_models import SummarizeResponse, Message
 from app.core.config import anthropic_client, settings
+from app.core.exceptions import validate_llm_response, handle_llm_error
+from app.core.prompts import build_summarize_system_prompt
 
 llm_model = settings.claude_model
-api_key = settings.anthropic_api_key
-
 MAX_TOKENS = settings.max_tokens
-
-
-def build_summarize_system_prompt(language_instruction: Optional[str]):
-    """Build system prompt for Claude summarization with optional language instruction."""
-
-    base_prompt = """You are a precise text summarization assistant. Your task is to distill the key information from the provided content into a clear, concise summary.
-
-        Guidelines:
-        - Capture the main ideas, key facts, and critical details
-        - Maintain factual accuracy - do not add information not present in the source
-        - Use clear, direct language
-        - Structure the summary logically (e.g., main point followed by supporting details)
-        - Omit redundant or minor details unless specifically relevant
-        """
-
-    if language_instruction:
-        return f"{base_prompt}\n\n{language_instruction}"
-
-    return base_prompt
 
 
 class SummarizeService:
@@ -35,7 +19,7 @@ class SummarizeService:
         self.cache_model = cache_client
         self.language_instruction = language_instruction
 
-    async def process(self, content: str):
+    async def process(self, content: List[Message]):
         content_type = self._detect_type(content)
 
         if content_type == "url":
@@ -43,14 +27,25 @@ class SummarizeService:
         elif content_type == "text":
             result = await self._handle_text(content)
         else:
-            print("ERROR IN PROCESS")
-            # TODO: throw a proper error
+            raise HTTPException(
+                status_code=404,
+                detail="Content type could not be detected. Please try again",
+            )
 
         return SummarizeResponse(
             summary=result.get("summary", ""),
+            metadata=result.get(
+                "metadata",
+                {
+                    "summary_length": 0,
+                    "source": None,  # URL or None
+                    "execution_time": 0.0,
+                },
+            ),
             source_type=content_type,
-            source=result.get("source"),  # URL or None
-            usage=result.get("usage", {"input_tokens": 0, "output_tokens": 0, "total_tokens": 0}),
+            usage=result.get(
+                "usage", {"input_tokens": 0, "output_tokens": 0, "total_tokens": 0}
+            ),
             model=self.llm_model,
         )
 
@@ -65,8 +60,10 @@ class SummarizeService:
 
     async def _handle_urls(self, url: str):
         """Handle URL summarization."""
-        print("** _HANDLE_URLS CALLED ** ")
-        print(f"** URL: {url}")
+        start_time = time.time()
+
+        # TODO: uncomment when ready to begin work on urls
+        raise HTTPException(501, detail="URL summarization not yet implemented")
 
         # TODO: REDIS - Check cache for existing summary first
         # cache_key = f"summary:{hash(url)}"
@@ -89,18 +86,38 @@ class SummarizeService:
         # Summarize with LLM if no cache result
         summary = "TODO: LLM call here"
 
+        # llm response:
+        summary_text = summary.content[0].text
+
+        validate_llm_response(summary)
+
+        summary_length = len(summary_text)
+
         # TODO: REDIS - Cache the summary
         # result = {"summary": summary, "source": url}
         # await self.cache.set(cache_key, result, ttl=604800)  # 7 days
 
+        total_time = time.time() - start_time
         return {
             "summary": summary,
             "source": url,
-            "usage": {"input_tokens": 0, "output_tokens": 0, "total_tokens": 0},  # Dummy for now
+            "metadata": {
+                "summary_length": summary_length,
+                "source": url,
+                "execution_time": round(total_time, 3),
+            },
+            "usage": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+            },  # Dummy for now
         }
 
-    async def _handle_text(self, text: str):
+    async def _handle_text(self, text: List[Message]):
         """Handle raw text summarization."""
+        if not text:
+            raise HTTPException(status_code=400, detail="Text content cannot be empty")
+        start_time = time.time()
 
         content_raw_text = text[0].content
         # TODO: REDIS - Check cache for existing summary first
@@ -111,36 +128,51 @@ class SummarizeService:
 
         language_instruction = None
         if self.language_instruction:
-            language_instruction = f"Always respond in {language_instruction}"
+            language_instruction = f"Always respond in {self.language_instruction}"
 
         system_prompt = build_summarize_system_prompt(language_instruction)
 
-        # Summarize with LLM if no cache result
-        summary = await anthropic_client.messages.create(
-            model=self.llm_model,
-            max_tokens=MAX_TOKENS,
-            system=system_prompt,
-            messages=[{"role": "user", "content": content_raw_text}],
-        )
+        try:
 
-        # llm response:
-        summary_text = summary.content[0].text
-        total_tokens = summary.usage.input_tokens + summary.usage.output_tokens
+            # Summarize with LLM if no cache result
+            summary = await anthropic_client.messages.create(
+                model=self.llm_model,
+                max_tokens=MAX_TOKENS,
+                system=system_prompt,
+                messages=[{"role": "user", "content": content_raw_text}],
+            )
 
-        # TODO: add error handling for faulty or buggy summaries
+            validate_llm_response(summary)
 
-        # TODO: REDIS - Cache the summary
-        # result = {"summary": summary}
-        # await self.cache.set(cache_key, result, ttl=604800)  # 7 days
+            # llm response:
+            summary_text = summary.content[0].text
 
-        # Extract the text from the first content block (Anthropic returns a list)
+            summary_length = len(summary_text)
+            total_tokens = summary.usage.input_tokens + summary.usage.output_tokens
 
-        return {
-            "summary": summary_text,
-            "source": None,  # No source for text summaries
-            "usage": {
-                "input_tokens": summary.usage.input_tokens,
-                "output_tokens": summary.usage.output_tokens,
-                "total_tokens": total_tokens,
-            },
-        }
+            # TODO: REDIS - Cache the summary
+            # result = {"summary": summary}
+            # await self.cache.set(cache_key, result, ttl=604800)  # 7 days
+
+            total_time = time.time() - start_time
+            return {
+                "summary": summary_text,
+                "metadata": {
+                    "summary_length": summary_length,
+                    "source": None,  # No source for text summaries
+                    "execution_time": round(total_time, 3),
+                },
+                "usage": {
+                    "input_tokens": summary.usage.input_tokens,
+                    "output_tokens": summary.usage.output_tokens,
+                    "total_tokens": total_tokens,
+                },
+            }
+
+        except (
+            anthropic.AuthenticationError,
+            anthropic.RateLimitError,
+            anthropic.APIConnectionError,
+            anthropic.APIStatusError,
+        ) as e:
+            handle_llm_error(e)

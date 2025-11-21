@@ -17,6 +17,12 @@ class TokenUsage(BaseModel):
     total_tokens: int
 
 
+class ResponseMetaData(BaseModel):
+    summary_length: int
+    source: Optional[str] = None  # URL if source_type is "url", otherwise None
+    execution_time: float
+
+
 class ChatRequest(BaseModel):
     """Request model for chat endpoint."""
 
@@ -39,7 +45,7 @@ class SummarizeResponse(BaseModel):
     """Response model for summarize endpoint."""
 
     summary: str
+    metadata: ResponseMetaData
     source_type: str  # "url" or "text"
-    source: Optional[str] = None  # URL if source_type is "url", otherwise None
     usage: TokenUsage  # Reuse existing TokenUsage model
     model: str
