@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # endpoints
-from app.api.v1.endpoints import health, chat
+from app.api.v1.endpoints import health, chat, summarize
 
 app = FastAPI(
     title="Summit API",
@@ -21,6 +21,7 @@ app.add_middleware(
 # instantiate routes:
 app.include_router(health.router, prefix="/api/v1", tags=["health"])
 app.include_router(chat.router, prefix="/api/v1", tags=["chat"])
+app.include_router(summarize.router, prefix="/api/v1", tags=["summarize"])
 
 
 @app.get("/")
