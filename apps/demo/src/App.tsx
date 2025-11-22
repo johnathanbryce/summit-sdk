@@ -13,14 +13,19 @@ import {
 } from '@mantine/core'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+const MAX_INPUT_LENGTH = 20000
+
+interface ResponseData {
+  model: string
+  execution_time: number
+  tokens: number
+  rawJson: string
+}
+
 interface Message {
   role: 'user' | 'assistant'
   content: string
-  metadata?: {
-    source_type?: string
-    source?: string | null
-    model?: string
-  }
+  responseData?: ResponseData
 }
 
 type InputType = 'summary' | 'chat'
@@ -32,6 +37,7 @@ const App = () => {
   const [inputType, setInputType] = useState<InputType>('summary')
   const [chatTokens, setChatTokens] = useState({ input: 0, output: 0, total: 0 })
   const [summaryTokens, setSummaryTokens] = useState({ input: 0, output: 0, total: 0 })
+  const [showJsonIndex, setShowJsonIndex] = useState<number | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // auto-scroll to bottom when messages change
@@ -59,16 +65,20 @@ const App = () => {
       setIsLoading(true)
       const endpoint = inputType === 'chat' ? '/chat' : '/summarize'
 
-      const conversationHistory = [...messages, userMessage].map((msg) => ({
-        role: msg.role,
-        content: msg.content,
-      }))
+      // Chat needs full history, summarize only needs current input
+      const content =
+        inputType === 'chat'
+          ? [...messages, userMessage].map((msg) => ({
+              role: msg.role,
+              content: msg.content,
+            }))
+          : [{ role: 'user', content: input.trim() }]
 
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          content: conversationHistory,
+          content,
           respondInLanguage: null,
         }),
       })
@@ -76,34 +86,34 @@ const App = () => {
       const data = await response.json()
 
       // handle different response formats for /chat vs /summarize
+      const rawJson = JSON.stringify(data, null, 2)
+
       if (inputType === 'chat' && data.response) {
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          { role: data.role, content: data.response },
-        ])
-        setInput('')
-      } else if (inputType === 'summary' && data.summary) {
-        // Summarize response - show full JSON structure
-        const formattedJson = JSON.stringify(
-          {
-            summary: data.summary,
-            source_type: data.source_type,
-            source: data.source,
-            model: data.model,
-            usage: data.usage,
-          },
-          null,
-          2
-        )
         setMessages((prevMessages) => [
           ...prevMessages,
           {
             role: 'assistant',
-            content: formattedJson,
-            metadata: {
-              source_type: data.source_type,
-              source: data.source,
+            content: data.response,
+            responseData: {
               model: data.model,
+              execution_time: data.execution_time,
+              tokens: data.usage.total_tokens,
+              rawJson,
+            },
+          },
+        ])
+        setInput('')
+      } else if (inputType === 'summary' && data.summary) {
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          {
+            role: 'assistant',
+            content: data.summary,
+            responseData: {
+              model: data.model,
+              execution_time: data.execution_time,
+              tokens: data.usage.total_tokens,
+              rawJson,
             },
           },
         ])
@@ -130,11 +140,13 @@ const App = () => {
     <Container size="lg" py="xl">
       <Stack gap="lg" mb="xl" ta="center">
         <Title order={1}>Summit SDK Demo</Title>
-        <Text c="dimmed">AI-powered content querying</Text>
+        <Text size="lg" c="dimmed">
+          AI-powered content querying
+        </Text>
 
         <Group justify="center" gap="xl">
           <Box>
-            <Text size="xs" c="dimmed" ta="center">
+            <Text size="md" c="dimmed" ta="center">
               Chat Tokens
             </Text>
             <Text size="sm" fw={500} ta="center">
@@ -142,7 +154,7 @@ const App = () => {
             </Text>
           </Box>
           <Box>
-            <Text size="xs" c="dimmed" ta="center">
+            <Text size="md" c="dimmed" ta="center">
               Summary Tokens
             </Text>
             <Text size="sm" fw={500} ta="center">
@@ -169,16 +181,14 @@ const App = () => {
                   key={index}
                   p="sm"
                   style={{
-                    maxWidth: message.metadata ? '95%' : '80%',
+                    maxWidth: message.responseData ? '95%' : '80%',
                     marginLeft: message.role === 'user' ? 'auto' : 0,
                     marginRight: message.role === 'user' ? 0 : 'auto',
                     backgroundColor:
                       message.role === 'user'
                         ? 'var(--mantine-color-blue-6)'
-                        : message.metadata
-                          ? 'var(--mantine-color-dark-9)'
-                          : 'var(--mantine-color-white)',
-                    color: message.role === 'user' || message.metadata ? 'white' : 'inherit',
+                        : 'var(--mantine-color-white)',
+                    color: message.role === 'user' ? 'white' : 'inherit',
                     borderRadius: 'var(--mantine-radius-md)',
                     border:
                       message.role === 'assistant'
@@ -188,23 +198,63 @@ const App = () => {
                 >
                   <Group justify="space-between" mb={4}>
                     <Text size="xs" fw={600} opacity={0.8}>
-                      {message.role === 'user'
-                        ? 'You'
-                        : message.metadata
-                          ? 'API Response'
-                          : 'Assistant'}
+                      {message.role === 'user' ? 'You' : 'Assistant'}
                     </Text>
                   </Group>
-                  <Text
-                    size="sm"
-                    style={{
-                      fontFamily: message.metadata ? 'monospace' : 'inherit',
-                      whiteSpace: message.metadata ? 'pre-wrap' : 'normal',
-                      fontSize: message.metadata ? '0.75rem' : undefined,
-                    }}
-                  >
-                    {message.content}
-                  </Text>
+                  {message.responseData && showJsonIndex === index ? (
+                    <Text
+                      size="xs"
+                      style={{
+                        whiteSpace: 'pre-wrap',
+                        fontFamily: 'monospace',
+                        backgroundColor: 'var(--mantine-color-dark-9)',
+                        color: 'var(--mantine-color-gray-4)',
+                        padding: '12px',
+                        borderRadius: '6px',
+                      }}
+                    >
+                      {message.responseData.rawJson}
+                    </Text>
+                  ) : (
+                    <Text size="sm" style={{ whiteSpace: 'pre-wrap' }}>
+                      {message.content}
+                    </Text>
+                  )}
+                  {message.responseData && (
+                    <Group
+                      gap="xs"
+                      mt="sm"
+                      pt="sm"
+                      justify="space-between"
+                      style={{ borderTop: '1px solid var(--mantine-color-gray-3)' }}
+                    >
+                      <Group gap="xs">
+                        <Text size="xs" c="dimmed">
+                          {message.responseData.model}
+                        </Text>
+                        <Text size="xs" c="dimmed">
+                          •
+                        </Text>
+                        <Text size="xs" c="dimmed">
+                          {message.responseData.tokens} tokens
+                        </Text>
+                        <Text size="xs" c="dimmed">
+                          •
+                        </Text>
+                        <Text size="xs" c="dimmed">
+                          {message.responseData.execution_time}s
+                        </Text>
+                      </Group>
+                      <Button
+                        size="compact-xs"
+                        variant="subtle"
+                        color="gray"
+                        onClick={() => setShowJsonIndex(showJsonIndex === index ? null : index)}
+                      >
+                        {showJsonIndex === index ? 'Response' : 'JSON'}
+                      </Button>
+                    </Group>
+                  )}
                 </Box>
               ))}
               {isLoading && (
@@ -250,8 +300,14 @@ const App = () => {
                       : 'Input text or a URL for a summary...'
                   }
                   disabled={isLoading}
+                  error={
+                    input.length > MAX_INPUT_LENGTH ? 'Input exceeds maximum length' : undefined
+                  }
                 />
-                <Button type="submit" disabled={isLoading || !input.trim()}>
+                <Button
+                  type="submit"
+                  disabled={isLoading || !input.trim() || input.length > MAX_INPUT_LENGTH}
+                >
                   {isLoading ? 'Sending...' : 'Send'}
                 </Button>
               </Group>
