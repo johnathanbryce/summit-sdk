@@ -20,7 +20,6 @@ class TokenUsage(BaseModel):
 class ResponseMetaData(BaseModel):
     summary_length: int
     source: Optional[str] = None  # URL if source_type is "url", otherwise None
-    execution_time: float
 
 
 class ChatRequest(BaseModel):
@@ -38,7 +37,7 @@ class ChatResponse(BaseModel):
     usage: TokenUsage
     model: str
     stop_reason: Optional[str] = None
-    message_id: Optional[str] = None
+    execution_time: float
 
 
 class SummarizeResponse(BaseModel):
@@ -47,5 +46,7 @@ class SummarizeResponse(BaseModel):
     summary: str
     metadata: ResponseMetaData
     source_type: str  # "url" or "text"
-    usage: TokenUsage  # Reuse existing TokenUsage model
+    usage: TokenUsage
     model: str
+    execution_time: float
+    stop_reason: Optional[str] = None

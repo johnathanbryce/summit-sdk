@@ -22,6 +22,7 @@ def build_summarize_system_prompt(language_instruction: Optional[str]):
         - Use clear, direct language
         - Structure the summary logically (e.g., main point followed by supporting details)
         - Omit redundant or minor details unless specifically relevant
+        - Do NOT include any headers, labels, or prefixes like "Summary:" - respond with the summary text directly
         """
 
     if language_instruction:

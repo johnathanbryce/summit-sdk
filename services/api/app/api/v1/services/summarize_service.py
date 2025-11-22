@@ -38,8 +38,7 @@ class SummarizeService:
                 "metadata",
                 {
                     "summary_length": 0,
-                    "source": None,  # URL or None
-                    "execution_time": 0.0,
+                    "source": None,
                 },
             ),
             source_type=content_type,
@@ -47,6 +46,8 @@ class SummarizeService:
                 "usage", {"input_tokens": 0, "output_tokens": 0, "total_tokens": 0}
             ),
             model=self.llm_model,
+            execution_time=result.get("execution_time", 0.0),
+            stop_reason=result.get("stop_reason"),
         )
 
     def _detect_type(self, content: List[Message]) -> str:
@@ -100,17 +101,16 @@ class SummarizeService:
         total_time = time.time() - start_time
         return {
             "summary": summary,
-            "source": url,
             "metadata": {
                 "summary_length": summary_length,
                 "source": url,
-                "execution_time": round(total_time, 3),
             },
             "usage": {
                 "input_tokens": 0,
                 "output_tokens": 0,
                 "total_tokens": 0,
-            },  # Dummy for now
+            },
+            "execution_time": round(total_time, 3),
         }
 
     async def _handle_text(self, text: List[Message]):
@@ -159,14 +159,15 @@ class SummarizeService:
                 "summary": summary_text,
                 "metadata": {
                     "summary_length": summary_length,
-                    "source": None,  # No source for text summaries
-                    "execution_time": round(total_time, 3),
+                    "source": None,
                 },
                 "usage": {
                     "input_tokens": summary.usage.input_tokens,
                     "output_tokens": summary.usage.output_tokens,
                     "total_tokens": total_tokens,
                 },
+                "execution_time": round(total_time, 3),
+                "stop_reason": summary.stop_reason,
             }
 
         except (

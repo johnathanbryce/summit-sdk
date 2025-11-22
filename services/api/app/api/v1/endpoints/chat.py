@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from typing import Optional
 import anthropic
+import time
 
 # internal
 from app.core.config import settings, anthropic_client
@@ -44,12 +45,14 @@ async def chat(request: ChatRequest):
     messages = [msg.model_dump() for msg in request.content]
 
     try:
+        start_time = time.time()
         message = await anthropic_client.messages.create(
             model=llm_model,
             max_tokens=MAX_TOKENS,
             system=system_prompt,
             messages=messages,
         )
+        execution_time = round(time.time() - start_time, 3)
 
         # Calculate total tokens
         total_tokens = message.usage.input_tokens + message.usage.output_tokens
@@ -64,7 +67,7 @@ async def chat(request: ChatRequest):
             },
             model=message.model,
             stop_reason=message.stop_reason,
-            message_id=message.id,
+            execution_time=execution_time,
         )
     except (
         anthropic.AuthenticationError,
